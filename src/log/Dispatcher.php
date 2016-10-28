@@ -5,6 +5,11 @@ namespace tourze\swoole\yii2\log;
 use tourze\swoole\yii2\Application;
 use tourze\swoole\yii2\web\ErrorHandler;
 
+/**
+ * Class Dispatcher
+ *
+ * @package tourze\swoole\yii2\log
+ */
 class Dispatcher extends \yii\log\Dispatcher
 {
 
@@ -18,7 +23,8 @@ class Dispatcher extends \yii\log\Dispatcher
             parent::dispatch($messages, $final);
             return;
         }
-        //return;
+
+        // 日志一般在请求结束后写入, 不需要再抛出异常, 直接echo即可
         foreach ($this->targets as $target)
         {
             //var_dump(get_class($target));

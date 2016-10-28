@@ -6,6 +6,11 @@ use tourze\swoole\yii2\Application;
 use tourze\swoole\yii2\async\Task;
 use yii\base\InvalidConfigException;
 
+/**
+ * Class FileTarget
+ *
+ * @package tourze\swoole\yii2\log
+ */
 class FileTarget extends \yii\log\FileTarget
 {
 
@@ -21,7 +26,7 @@ class FileTarget extends \yii\log\FileTarget
      * @param $rotateByCopy
      * @throws \yii\base\InvalidConfigException
      */
-    public static function flushTask($text, $enableRotation, $logFile, $fileMode, $maxFileSize, $maxLogFiles, $rotateByCopy)
+    public static function taskFlush($text, $enableRotation, $logFile, $fileMode, $maxFileSize, $maxLogFiles, $rotateByCopy)
     {
         //sleep(1);
         if (($fp = @fopen($logFile, 'a')) === false)
@@ -95,7 +100,7 @@ class FileTarget extends \yii\log\FileTarget
         {
             return parent::getContextMessage();
         }
-        // 原来的上下文格式化函数, VarDumper太耗时了
+        // 原来的上下文格式化函数, VarDumper太耗时了, 改成直接print_r, 虽然样式丢失不了, 但是效率提升不少
         $result = [];
         foreach ($this->logVars as $key)
         {
@@ -118,10 +123,10 @@ class FileTarget extends \yii\log\FileTarget
             return;
         }
 
-        // 下面的异步, 没能真实提升性能
-        // 上一步的getContextMessage耗费很多CPU资源
+        // 这里的$text合并, 最好也放到task中去实现, 但是因为在格式化的过程中, 需要用到当前的一些组件信息, 不好大改, 暂时这样先
+        // TODO 优化array_map, 减少代码执行量
         $text = implode("\n", array_map([$this, 'formatMessage'], $this->messages)) . "\n";
-        Task::addTask('\tourze\swoole\yii2\log\FileTarget::flushTask', [
+        Task::addTask('\tourze\swoole\yii2\log\FileTarget::taskFlush', [
             'text' => $text,
             'enableRotation' => $this->enableRotation,
             'logFile' => $this->logFile,

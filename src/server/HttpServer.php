@@ -116,7 +116,7 @@ class HttpServer extends Server
         {
             $config = ArrayHelper::merge($config, include $file);
         }
-        Container::$persistClasses = Yii::$app->params['persistClasses'];
+        //Container::$persistClasses = Yii::$app->params['persistClasses'];
         //Yii::$container = new Container();
         Yii::$app = Application::$workerApp = $this->app = new Application($config);
         Yii::setLogger(new Logger());
@@ -277,18 +277,18 @@ class HttpServer extends Server
                 // 使用clone, 原型模式
                 // 所有请求都clone一个原生$app对象
                 $app->run();
-                $app->finish();
+                $app->afterRun();
             }
             catch (ErrorException $e)
             {
-                $app->finish();
+                $app->afterRun();
                 //echo (string) $e;
                 //$response->end('');
                 $app->errorHandler->handleException($e);
             }
             catch (\Exception $e)
             {
-                $app->finish();
+                $app->afterRun();
                 //echo (string) $e;
                 //$response->end('');
                 $app->errorHandler->handleException($e);
@@ -305,11 +305,9 @@ class HttpServer extends Server
         if ($this->xhprofDebug)
         {
             $xhprofData = xhprof_disable();
-            require_once '/Users/luzhongpeng/vagrant/wwwroot/xhprof/xhprof_lib/utils/xhprof_lib.php';
-            require_once '/Users/luzhongpeng/vagrant/wwwroot/xhprof/xhprof_lib/utils/xhprof_runs.php';
             $xhprofRuns = new \XHProfRuns_Default();
             $runId = $xhprofRuns->save_run($xhprofData, 'xhprof_test');
-            echo "$file http://127.0.0.1/xhprof/xhprof_html/index.php?run=" . $runId . '&source=xhprof_test'."\n";
+            echo "http://127.0.0.1/xhprof/xhprof_html/index.php?run=" . $runId . '&source=xhprof_test'."\n";
         }
     }
 }

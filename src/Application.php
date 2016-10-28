@@ -420,7 +420,7 @@ class Application extends \yii\web\Application
     {
         $this->getLog()->setLogger(Yii::getLogger());
         $this->getSecurity();
-        $this->getUrlManager();
+        $this->getUrlManager(); // TODO 优化urlManager组件
         $this->getRequest()->setBaseUrl('');
         $this->getRequest()->setScriptUrl('/index.php');
         $this->getRequest()->setScriptFile('/index.php');
@@ -434,6 +434,25 @@ class Application extends \yii\web\Application
         $this->getView();
         $this->getDb();
         $this->getUser();
+        $this->getMailer();
+    }
+
+    /**
+     * run之前先准备上下文信息
+     */
+    public function beforeRun()
+    {
+        Event::offAll();
+        // widget计数器等要清空
+        Widget::$counter = 0;
+        Widget::$stack = [];
+        $this->getErrorHandler()->setSwooleResponse($this->getSwooleResponse());
+        $this->getRequest()->setQueryParams(isset($this->getSwooleRequest()->get) ? $this->getSwooleRequest()->get : []);
+        // 上面处理了$_GET部分, 但是没处理$_POST部分.
+        $this->getRequest()->setHostInfo('http://' . $this->getSwooleRequest()->header['host']);
+        $this->getRequest()->setPathInfo($this->getSwooleRequest()->server['path_info']);
+        $this->getRequest()->setSwooleRequest($this->getSwooleRequest());
+        $this->getResponse()->setSwooleResponse($this->getSwooleResponse());
     }
 
     /**
@@ -445,16 +464,7 @@ class Application extends \yii\web\Application
         {
             return parent::run();
         }
-        Event::offAll();
-        // widget计数器等要清空
-        Widget::$counter = 0;
-        Widget::$stack = [];
-        $this->getErrorHandler()->setSwooleResponse($this->getSwooleResponse());
-        $this->getRequest()->setQueryParams(isset($this->getSwooleRequest()->get) ? $this->getSwooleRequest()->get : []);
-        $this->getRequest()->setHostInfo('http://' . $this->getSwooleRequest()->header['host']);
-        $this->getRequest()->setPathInfo($this->getSwooleRequest()->server['path_info']);
-        $this->getRequest()->setSwooleRequest($this->getSwooleRequest());
-        $this->getResponse()->setSwooleResponse($this->getSwooleResponse());
+        $this->beforeRun();
         return parent::run();
     }
 
@@ -490,7 +500,7 @@ class Application extends \yii\web\Application
      * 用于收尾
      * 这里因为用了swoole的task,所以性能很低
      */
-    public function finish()
+    public function afterRun()
     {
         Yii::getLogger()->flush();
         $this->getSession()->close();

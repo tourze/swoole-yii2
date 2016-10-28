@@ -6,8 +6,18 @@ use tourze\swoole\yii2\Application;
 use Yii;
 use yii\web\View;
 
+/**
+ * Class Module
+ *
+ * @package tourze\swoole\yii2\debug
+ */
 class Module extends \yii\debug\Module
 {
+
+    /**
+     * @var LogTarget
+     */
+    public static $logTargetInstance = null;
 
     /**
      * @inheritdoc
@@ -25,12 +35,21 @@ class Module extends \yii\debug\Module
      */
     public function bootstrap($app)
     {
-        $this->logTarget = Yii::$app->getLog()->targets['debug'] = new LogTarget($this);
+        if ( ! self::$logTargetInstance)
+        {
+            self::$logTargetInstance = new LogTarget($this);
+            self::$logTargetInstance->module = null; // 不要引用$this
+        }
+        $logTarget = clone self::$logTargetInstance;
+        $logTarget->module = $this;
+        $logTarget->tag = uniqid(); // 在高并发情况下可能会重复
+        $this->logTarget = Yii::$app->getLog()->targets['debug'] = $logTarget;
 
         $app->on(Application::EVENT_BEFORE_REQUEST, function () use ($app) {
             $app->getView()->on(View::EVENT_END_BODY, [$this, 'renderToolbar']);
         });
 
+        // TODO urlManager组件优化
         $app->getUrlManager()->addRules([
             [
                 'class' => 'yii\web\UrlRule',
@@ -51,8 +70,8 @@ class Module extends \yii\debug\Module
     protected function corePanels()
     {
         return array_merge(parent::corePanels(), [
-            'config' => ['class' => 'tourze\swoole\yii2\debug\ConfigPanel'],
-            'request' => ['class' => 'tourze\swoole\yii2\debug\RequestPanel'],
+            'config' => ['class' => ConfigPanel::className()],
+            'request' => ['class' => RequestPanel::className()],
         ]);
     }
 }
