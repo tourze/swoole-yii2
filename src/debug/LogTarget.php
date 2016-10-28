@@ -3,7 +3,9 @@
 namespace tourze\swoole\yii2\debug;
 
 use tourze\swoole\yii2\Application;
-use tourze\swoole\yii2\async\FileHelper;
+use tourze\swoole\yii2\async\Task;
+use yii\base\InvalidConfigException;
+use yii\helpers\FileHelper;
 
 /**
  * 调试模块的日志记录器
@@ -24,70 +26,90 @@ class LogTarget extends \yii\debug\LogTarget
             return;
         }
 
-        $path = $this->module->dataPath;
-        \yii\helpers\FileHelper::createDirectory($path, $this->module->dirMode);
+        FileHelper::createDirectory($this->module->dataPath, $this->module->dirMode);
 
         $summary = $this->collectSummary();
-        $dataFile = "$path/{$this->tag}.data";
         $data = [];
+        // 收集面板的调试信息
         foreach ($this->module->panels as $id => $panel)
         {
             $data[$id] = $panel->save();
         }
         $data['summary'] = $summary;
 
-        // 异步写文件
-        FileHelper::write($dataFile, serialize($data), 0, function () use ($dataFile, $path, $summary) {
-            //echo 'async write file: '.__METHOD__ . "\n";
-            if ($this->module->fileMode !== null)
-            {
-                @chmod($dataFile, $this->module->fileMode);
-            }
-            $indexFile = "$path/index.data";
-            $this->updateIndexFile($indexFile, $summary);
-        });
+        //self::saveDebugData($this->tag, $this->module->dataPath, $data, $this->module->fileMode, $this->module->historySize, $summary);
+        Task::addTask('\tourze\swoole\yii2\debug\LogTarget::saveDebugData', [$this->tag, $this->module->dataPath, $data, $this->module->fileMode, $this->module->historySize, $summary]);
     }
 
     /**
-     * Updates index file with summary log data
+     * 将原有的export部分逻辑/ updateIndexFile / gc 合并在一起
+     * 这个方法默认只应该由task去执行
      *
-     * @param string $indexFile path to index file
-     * @param array $summary summary log data
+     * @param $tag
+     * @param $dataPath
+     * @param $data
+     * @param $fileMode
+     * @param $historySize
+     * @param $summary
      * @throws \yii\base\InvalidConfigException
      */
-    private function updateIndexFile($indexFile, $summary)
+    public static function saveDebugData($tag, $dataPath, $data, $fileMode, $historySize, $summary)
     {
-        if ( ! file_exists($indexFile))
+        $dataFile = "$dataPath/{$tag}.data";
+        file_put_contents($dataFile, serialize($data));
+        if ($fileMode !== null)
         {
-            //echo __METHOD__ . " create index file \n";
-            file_put_contents($indexFile, 'a:0:{}');
+            @chmod($dataFile, $fileMode);
         }
-        FileHelper::read($indexFile, function ($filename, $content) use ($indexFile, $summary) {
-            //echo __METHOD__ . " read file ok.\n";
-            if (empty($content))
+
+        $indexFile = "$dataPath/index.data";
+        touch($indexFile);
+        if (($fp = @fopen($indexFile, 'r+')) === false)
+        {
+            throw new InvalidConfigException("Unable to open debug data index file: $indexFile");
+        }
+        @flock($fp, LOCK_EX);
+        $manifest = '';
+        while (($buffer = fgets($fp)) !== false)
+        {
+            $manifest .= $buffer;
+        }
+        if ( ! feof($fp) || empty($manifest))
+        {
+            // error while reading index data, ignore and create new
+            $manifest = [];
+        }
+        else
+        {
+            $manifest = unserialize($manifest);
+        }
+
+        $manifest[$tag] = $summary;
+        if (count($manifest) > $historySize + 10)
+        {
+            $n = count($manifest) - $historySize;
+            foreach (array_keys($manifest) as $tag)
             {
-                // error while reading index data, ignore and create new
-                $manifest = [];
-            }
-            else
-            {
-                // 因为有莫名其妙的错误, 麻烦, 直接屏蔽错误了..
-                $manifest = (array) @unserialize($content);
-            }
-            $manifest[$this->tag] = $summary;
-            // 下面的gc, 在并发大的情况下, 有点问题
-            $this->gc($manifest);
-            $manifest = serialize($manifest);
-            // 序列化问题: http://stackoverflow.com/questions/10152904/unserialize-function-unserialize-error-at-offset
-            $manifest = preg_replace_callback('!s:(\d+):"(.*?)";!', function($match) {
-                return ($match[1] == strlen($match[2])) ? $match[0] : 's:' . strlen($match[2]) . ':"' . $match[2] . '";';
-            }, $manifest);
-            FileHelper::write($indexFile, $manifest, 0, function () use ($indexFile) {
-                if ($this->module->fileMode !== null)
+                $file = $dataPath . "/$tag.data";
+                @unlink($file);
+                unset($manifest[$tag]);
+                if (--$n <= 0)
                 {
-                    @chmod($indexFile, $this->module->fileMode);
+                    break;
                 }
-            });
-        });
+            }
+        }
+
+        ftruncate($fp, 0);
+        rewind($fp);
+        fwrite($fp, serialize($manifest));
+
+        @flock($fp, LOCK_UN);
+        @fclose($fp);
+
+        if ($fileMode !== null)
+        {
+            @chmod($indexFile, $fileMode);
+        }
     }
 }
