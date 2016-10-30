@@ -101,9 +101,6 @@ return [
                 __DIR__ . '/../../common/config/main.php',
                 __DIR__ . '/../../frontend/config/main.php'
             ],
-            // 这里配置一些Bootstrap类, 这些bootstrap类每次run时都会初始化
-            // 一些模块会在bootstrap中加入请求相关的逻辑
-            'bootstrapMulti' => [],
             // 配置参考 https://www.kancloud.cn/admins/swoole/201155
             'server' => [
                 'worker_num' => 20,

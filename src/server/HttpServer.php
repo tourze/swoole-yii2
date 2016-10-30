@@ -152,10 +152,6 @@ class HttpServer extends Server
         }
         $config['aliases']['@webroot'] = $this->root;
         $config['aliases']['@web'] = '/';
-        if (isset($this->config['bootstrapMulti']))
-        {
-            $config['bootstrapMulti'] = $this->config['bootstrapMulti'];
-        }
         $this->app = Yii::$app = Application::$workerApp = new Application($config);
         Yii::setLogger(new Logger());
         $this->app->setRootPath($this->root);

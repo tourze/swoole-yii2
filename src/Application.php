@@ -143,11 +143,6 @@ class Application extends \yii\web\Application
     }
 
     /**
-     * @var array 在这个列表中的模块, 每次请求处理都执行bootstrap流程, 这个选项会影响性能, 但因为有些模块的逻辑的确是放在bootstrap中实现了, 所以没办法只能放这里
-     */
-    public $bootstrapMulti = [];
-
-    /**
      * @var array 扩展缓存
      */
     public static $defaultExtensionCache = null;
@@ -192,11 +187,6 @@ class Application extends \yii\web\Application
     }
 
     /**
-     * @var array 扩展bootstrap程序缓存
-     */
-    public static $extensionBootstrapCache = [];
-
-    /**
      * 自动加载扩展的初始化
      *
      * @throws \yii\base\InvalidConfigException
@@ -218,20 +208,8 @@ class Application extends \yii\web\Application
             }
             if (isset($extension['bootstrap']))
             {
-                if ( ! isset(static::$extensionBootstrapCache[$extension['name']]))
-                {
-                    static::$extensionBootstrapCache[$extension['name']] = Yii::createObject($extension['bootstrap']);
-                }
-                $component = static::$extensionBootstrapCache[$extension['name']];
-                if ($component instanceof BootstrapInterface)
-                {
-                    Yii::trace('Bootstrap with ' . get_class($component) . '::bootstrap()', __METHOD__);
-                    $component->bootstrap($this);
-                }
-                else
-                {
-                    Yii::trace('Bootstrap with ' . get_class($component), __METHOD__);
-                }
+                $this->bootstrap[] = $extension['bootstrap'];
+                Yii::trace('Push extension bootstrap to module bootstrap list', __METHOD__);
             }
         }
     }
@@ -271,6 +249,7 @@ class Application extends \yii\web\Application
                 Yii::trace('Bootstrap with ' . get_class($component) . '::bootstrap()', __METHOD__);
                 $this->bootstrap[$k] = $component;
                 $component->bootstrap($this);
+                $this->bootstrap[$k] = $component;
             }
             else
             {
@@ -441,19 +420,11 @@ class Application extends \yii\web\Application
         $this->getRequest()->setPathInfo($this->getSwooleRequest()->server['path_info']);
         $this->getRequest()->setSwooleRequest($this->getSwooleRequest());
         $this->getResponse()->setSwooleResponse($this->getSwooleResponse());
-
-        if ( ! empty($this->bootstrapMulti))
+        foreach ($this->bootstrap as $k => $component)
         {
-            foreach ($this->bootstrap as $component)
+            if (is_object($component) && $component instanceof Refreshable)
             {
-                if (
-                    is_object($component)
-                    && in_array(get_class($component), $this->bootstrapMulti)
-                    && $component instanceof BootstrapInterface
-                )
-                {
-                    $component->bootstrap($this);
-                }
+                $component->refresh();
             }
         }
     }

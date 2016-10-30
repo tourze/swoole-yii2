@@ -3,6 +3,7 @@
 namespace tourze\swoole\yii2\debug;
 
 use tourze\swoole\yii2\Application;
+use tourze\swoole\yii2\Refreshable;
 use Yii;
 use yii\web\View;
 
@@ -11,7 +12,7 @@ use yii\web\View;
  *
  * @package tourze\swoole\yii2\debug
  */
-class Module extends \yii\debug\Module
+class Module extends \yii\debug\Module implements Refreshable
 {
 
     /**
@@ -50,6 +51,7 @@ class Module extends \yii\debug\Module
             $app->getView()->on(View::EVENT_END_BODY, [$this, 'renderToolbar']);
         });
 
+        //var_dump(count($app->getUrlManager()->rules));
         // TODO urlManager组件优化
         $app->getUrlManager()->addRules([
             [
@@ -63,5 +65,13 @@ class Module extends \yii\debug\Module
                 'pattern' => $this->id . '/<controller:[\w\-]+>/<action:[\w\-]+>',
             ]
         ], false);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function refresh()
+    {
+        $this->bootstrap(Yii::$app);
     }
 }
