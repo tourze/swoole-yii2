@@ -44,6 +44,7 @@ Blink的优点在于简单, 缺点也在于太简单. 如果是新项目, 并且
 2. swoole任务投递的优化
 3. 增加单元测试
 4. swoole管理脚本的完善
+5. 效率优化
 
 ## 使用方法
 
@@ -100,7 +101,8 @@ return [
                 __DIR__ . '/../../common/config/main.php',
                 __DIR__ . '/../../frontend/config/main.php'
             ],
-            // 这里配置一些Bootstrap类, 这些bootstrap类每次run时都会初始化(一些模块会在bootstrap中加入请求的逻辑)
+            // 这里配置一些Bootstrap类, 这些bootstrap类每次run时都会初始化
+            // 一些模块会在bootstrap中加入请求相关的逻辑
             'bootstrapMulti' => [],
             // 配置参考 https://www.kancloud.cn/admins/swoole/201155
             'server' => [
@@ -114,7 +116,7 @@ return [
 ];
 ```
 
-分别配置好 frontend 和 backend 的服务信息后, 我们执行 `./yii swoole/http frontend` 或 `./yii swoole/http backend`, 就可以启动 swoole 服务器了.
+配置好后, 我们执行 `./yii swoole/http frontend`, 就可以启动 swoole 服务器了.
 
 ## 兼容思路
 
