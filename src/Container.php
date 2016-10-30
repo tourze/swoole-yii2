@@ -2,85 +2,43 @@
 
 namespace tourze\swoole\yii2;
 
-use ReflectionClass;
-use yii\base\Object;
-use yii\di\NotInstantiableException;
-
 class Container extends \yii\di\Container
 {
 
     /**
-     * @var array
+     * @var array 类的别名
      */
-    public static $persistClasses = [];
-
-    /**
-     * @var array
-     */
-    public static $persistInstances = [];
+    public static $classAlias = [
+        'yii\web\Request' => 'tourze\swoole\yii2\web\Request',
+        'yii\web\Response' => 'tourze\swoole\yii2\web\Response',
+        'yii\web\Session' => 'tourze\swoole\yii2\web\Session',
+        'yii\web\AssetManager' => 'tourze\swoole\yii2\web\AssetManager',
+        'yii\web\ErrorHandler' => 'tourze\swoole\yii2\web\ErrorHandler',
+        'yii\web\User' => 'tourze\swoole\yii2\web\User',
+        'yii\web\View' => 'tourze\swoole\yii2\web\View',
+        'yii\log\Dispatcher' => 'tourze\swoole\yii2\log\Dispatcher',
+        'yii\log\FileTarget' => 'tourze\swoole\yii2\log\FileTarget',
+        'yii\db\Connection' => 'tourze\swoole\yii2\db\Connection',
+        'yii\swiftmailer\Mailer' => 'tourze\swoole\yii2\mailer\SwiftMailer',
+        'yii\debug\Module' => 'tourze\swoole\yii2\debug\Module',
+        'yii\debug\panels\ConfigPanel' => 'tourze\swoole\yii2\debug\ConfigPanel',
+        'yii\debug\panels\RequestPanel' => 'tourze\swoole\yii2\debug\RequestPanel',
+    ];
 
     /**
      * @inheritdoc
      */
     protected function build($class, $params, $config)
     {
-        echo $class . "\n";
-        return parent::build($class, $params, $config);
-        /* @var $reflection ReflectionClass */
-        list ($reflection, $dependencies) = $this->getDependencies($class);
-
-        foreach ($params as $index => $param)
+        if (isset(self::$classAlias[$class]))
         {
-            $dependencies[$index] = $param;
-        }
-
-        $dependencies = $this->resolveDependencies($dependencies, $reflection);
-        if ( ! $reflection->isInstantiable())
-        {
-            throw new NotInstantiableException($reflection->name);
-        }
-        if (empty($config))
-        {
-            return $reflection->newInstanceArgs($dependencies);
-        }
-
-        if ( ! empty($dependencies) && $reflection->implementsInterface('yii\base\Configurable'))
-        {
-            // 如果类可以持久化, 则有另外的逻辑
-            // 暂时只支持在构造函数中传$config来赋值的类
-            if (in_array($class, self::$persistClasses))
-            {
-                if ( ! isset(self::$persistInstances[$class]))
-                {
-                    // 构造对象, 并且跳过构造器
-                    self::$persistInstances[$class] = $reflection->newInstanceWithoutConstructor();
-                }
-                $object = clone self::$persistInstances[$class];
-                foreach ($config as $name => $value)
-                {
-                    $object->$name = $value;
-                }
-                if ($object instanceof Object)
-                {
-                    // 触发一次init初始化流程
-                    $object->init();
-                }
-                return $object;
-            }
-            // set $config as the last parameter (existing one will be overwritten)
-            $dependencies[count($dependencies) - 1] = $config;
-            //var_dump($reflection, $dependencies);
-            //echo $class . "<br/>\n";
-            return $reflection->newInstanceArgs($dependencies);
+            $class = self::$classAlias[$class];
+            //echo "alias: $class\n";
         }
         else
         {
-            $object = $reflection->newInstanceArgs($dependencies);
-            foreach ($config as $name => $value)
-            {
-                $object->$name = $value;
-            }
-            return $object;
+            //echo "build: $class\n";
         }
+        return parent::build($class, $params, $config);
     }
 }

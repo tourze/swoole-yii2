@@ -2,9 +2,7 @@
 
 namespace tourze\swoole\yii2\db;
 
-use xj\dbreconnect\base\Connection;
-
-class MySQLConnection extends Connection
+class Connection extends \xj\dbreconnect\base\Connection
 {
 
     /**

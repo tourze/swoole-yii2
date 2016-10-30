@@ -9,7 +9,6 @@ use yii\web\Cookie;
 
 /**
  * Class Session
- * @TODO 某些场景下,会话错乱的BUG
  *
  * @property string sessionKey
  * @property swoole_http_response swooleResponse

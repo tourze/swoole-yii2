@@ -24,6 +24,7 @@ class Module extends \yii\debug\Module
      */
     public function init()
     {
+        //echo __METHOD__ . " init.\n";
         parent::init();
         $this->setViewPath('@yii/debug/views');
     }
@@ -62,16 +63,5 @@ class Module extends \yii\debug\Module
                 'pattern' => $this->id . '/<controller:[\w\-]+>/<action:[\w\-]+>',
             ]
         ], false);
-    }
-
-    /**
-     * @inheritdoc
-     */
-    protected function corePanels()
-    {
-        return array_merge(parent::corePanels(), [
-            'config' => ['class' => ConfigPanel::className()],
-            'request' => ['class' => RequestPanel::className()],
-        ]);
     }
 }

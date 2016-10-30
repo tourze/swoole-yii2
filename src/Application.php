@@ -400,23 +400,6 @@ class Application extends \yii\web\Application
     }
 
     /**
-     * 覆盖部分核心组件
-     *
-     * @inheritdoc
-     */
-    public function coreComponents()
-    {
-        return array_merge(parent::coreComponents(), [
-            'request' => ['class' => Request::className()],
-            'response' => ['class' => Response::className()],
-            'session' => ['class' => Session::className()],
-            'errorHandler' => ['class' => ErrorHandler::className()],
-            'assetManager' => ['class' => AssetManager::className()],
-            'user' => ['class' => User::className()],
-        ]);
-    }
-
-    /**
      * 预热一些可以浅复制的对象
      *
      * @throws \yii\base\InvalidConfigException

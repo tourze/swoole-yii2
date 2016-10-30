@@ -143,8 +143,8 @@ class HttpServer extends Server
             $config = ArrayHelper::merge($config, include $file);
         }
 
-        //Container::$persistClasses = Yii::$app->params['persistClasses'];
-        //Yii::$container = new Container();
+        // 为Yii分配一个新的DI容器
+        Yii::$container = new Container();
 
         if ( ! isset($config['components']['assetManager']['basePath']))
         {

@@ -29,7 +29,7 @@ class FileTarget extends \yii\log\FileTarget
     public static function taskFlush($text, $enableRotation, $logFile, $fileMode, $maxFileSize, $maxLogFiles, $rotateByCopy)
     {
         //sleep(1);
-        if (($fp = @fopen($logFile, 'a')) === false)
+        if (($fp = @fopen($logFile, 'a+')) === false)
         {
             throw new InvalidConfigException("Unable to append to log file: {$logFile}");
         }
