@@ -5,6 +5,7 @@ namespace tourze\swoole\yii2;
 use swoole_http_request;
 use swoole_http_response;
 use swoole_http_server;
+use tourze\swoole\yii2\web\AssetManager;
 use tourze\swoole\yii2\web\ErrorHandler;
 use tourze\swoole\yii2\web\Request;
 use tourze\swoole\yii2\web\Response;
@@ -58,7 +59,7 @@ class Application extends \yii\web\Application
     public static $workerApp = null;
 
     /**
-     * @var swoole_http_server
+     * @var swoole_http_server 当前运行中的swoole实例
      */
     protected $_swooleServer;
 
@@ -79,7 +80,7 @@ class Application extends \yii\web\Application
     }
 
     /**
-     * @var swoole_http_request
+     * @var swoole_http_request 当前正在处理的swoole请求实例
      */
     protected $_swooleRequest;
 
@@ -100,7 +101,7 @@ class Application extends \yii\web\Application
     }
 
     /**
-     * @var swoole_http_response
+     * @var swoole_http_response 当前正在处理的swoole响应实例
      */
     protected $_swooleResponse;
 
@@ -140,6 +141,11 @@ class Application extends \yii\web\Application
     {
         $this->_rootPath = $rootPath;
     }
+
+    /**
+     * @var array 在这个列表中的模块, 每次请求处理都执行bootstrap流程, 这个选项会影响性能, 但因为有些模块的逻辑的确是放在bootstrap中实现了, 所以没办法只能放这里
+     */
+    public $bootstrapMulti = [];
 
     /**
      * @var array 扩展缓存
@@ -201,7 +207,7 @@ class Application extends \yii\web\Application
         {
             $this->extensions = $this->getDefaultExtensions();
         }
-        foreach ($this->extensions as $extension)
+        foreach ($this->extensions as $k => $extension)
         {
             if ( ! empty($extension['alias']))
             {
@@ -231,18 +237,13 @@ class Application extends \yii\web\Application
     }
 
     /**
-     * @var array 模块bootstrap程序缓存
-     */
-    public static $moduleBootstrapCache = [];
-
-    /**
      * 自动加载模块的初始化
      *
      * @throws \yii\base\InvalidConfigException
      */
     public function moduleBootstrap()
     {
-        foreach ($this->bootstrap as $class)
+        foreach ($this->bootstrap as $k => $class)
         {
             $component = null;
             if (is_string($class))
@@ -262,16 +263,13 @@ class Application extends \yii\web\Application
             }
             if ( ! isset($component))
             {
-                if ( ! isset(static::$moduleBootstrapCache[$class]))
-                {
-                    static::$moduleBootstrapCache[$class] = Yii::createObject($class);
-                }
-                $component = static::$moduleBootstrapCache[$class];
+                $component = Yii::createObject($class);
             }
 
             if ($component instanceof BootstrapInterface)
             {
                 Yii::trace('Bootstrap with ' . get_class($component) . '::bootstrap()', __METHOD__);
+                $this->bootstrap[$k] = $component;
                 $component->bootstrap($this);
             }
             else
@@ -402,11 +400,18 @@ class Application extends \yii\web\Application
     }
 
     /**
+     * 覆盖部分核心组件
+     *
      * @inheritdoc
      */
     public function coreComponents()
     {
         return array_merge(parent::coreComponents(), [
+            'request' => ['class' => Request::className()],
+            'response' => ['class' => Response::className()],
+            'session' => ['class' => Session::className()],
+            'errorHandler' => ['class' => ErrorHandler::className()],
+            'assetManager' => ['class' => AssetManager::className()],
             'user' => ['class' => User::className()],
         ]);
     }
@@ -453,6 +458,21 @@ class Application extends \yii\web\Application
         $this->getRequest()->setPathInfo($this->getSwooleRequest()->server['path_info']);
         $this->getRequest()->setSwooleRequest($this->getSwooleRequest());
         $this->getResponse()->setSwooleResponse($this->getSwooleResponse());
+
+        if ( ! empty($this->bootstrapMulti))
+        {
+            foreach ($this->bootstrap as $component)
+            {
+                if (
+                    is_object($component)
+                    && in_array(get_class($component), $this->bootstrapMulti)
+                    && $component instanceof BootstrapInterface
+                )
+                {
+                    $component->bootstrap($this);
+                }
+            }
+        }
     }
 
     /**

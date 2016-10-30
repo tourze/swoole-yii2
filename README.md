@@ -49,7 +49,72 @@ Blink的优点在于简单, 缺点也在于太简单. 如果是新项目, 并且
 
 首先执行 `composer require tourze/swoole-yii2`
 
-修改原配置文件:
+下面的配置描述, 基本上就是基于 https://github.com/yiisoft/yii2-app-advanced 这个官方 DEMO 来说明的.
+建议在阅读前先大概了解下这个项目.
+
+### console配置
+
+swoole 的实现, 全部都是基于 CLI 的, 项目的所有管理相关也是使用CLI实现的.
+
+这里第一步我们应该先配置好一个 Yii2 的 console 服务.
+
+在 `console/config/main.php` 中加入类似以下的代码:
+
+```
+    'id' => 'app-console',
+    'controllerNamespace' => 'console\controllers',
+    'controllerMap' => [
+        // 在下面指定定义command控制器
+        'swoole' => \tourze\swoole\yii2\commands\SwooleController::className(),
+    ],
+```
+
+此时执行 `./yii`, 应该可以在底部看到 swoole 相关命令.
+
+### frontend/backend配置
+
+我们建议 frontend 部分使用 swoole 来运行, backend 部分依然使用已有的 php-fpm 模式来运行.
+
+使用本项目, frontend 和 backend 的运行方式会有所变更.
+
+在以前的方式中, 我们会在入口文件 include 所有配置, 然后 new Application 使系统运行起来.
+在现在的新方式中, 我们的配置会在服务运行起来时就加载到内存, 节省了上面加载配置的时间.
+
+我们需要在 `console/config/params.php` 中加入类似以下的代码:
+
+```
+<?php
+return [
+    'swooleHttp' => [
+        'frontend' => [
+            'host' => '127.0.0.1',
+            'port' => '6677',
+            'root' => realpath(__DIR__ . '/../../frontend/web'),
+            // bootstrap文件, 只会引入一次
+            'bootstrapFile' => [
+                __DIR__ . '/../../common/config/aliases.php',
+                __DIR__ . '/../../admin/config/aliases.php',
+            ],
+            // Yii的配置文件, 只会引入一次
+            'configFile' => [
+                __DIR__ . '/../../common/config/main.php',
+                __DIR__ . '/../../frontend/config/main.php'
+            ],
+            // 这里配置一些Bootstrap类, 这些bootstrap类每次run时都会初始化(一些模块会在bootstrap中加入请求的逻辑)
+            'bootstrapMulti' => [],
+            // 配置参考 https://www.kancloud.cn/admins/swoole/201155
+            'server' => [
+                'worker_num' => 20,
+                'max_request' => 10000,
+                // 任务进程数
+                'task_worker_num' => 50,
+            ],
+        ],
+    ],
+];
+```
+
+分别配置好 frontend 和 backend 的服务信息后, 我们执行 `./yii swoole/http frontend` 或 `./yii swoole/http backend`, 就可以启动 swoole 服务器了.
 
 ## 兼容思路
 

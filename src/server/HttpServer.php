@@ -34,6 +34,11 @@ class HttpServer extends Server
     public $xhprofDebug = false;
 
     /**
+     * @var bool
+     */
+    public $debug = false;
+
+    /**
      * @var string
      */
     public $root;
@@ -53,8 +58,15 @@ class HttpServer extends Server
      */
     public function run($app)
     {
-        $this->xhprofDebug = Yii::$app->params['xhprofDebug'];
         $this->config = (array) Yii::$app->params['swooleHttp'][$app];
+        if (isset($this->config['xhprofDebug']))
+        {
+            $this->xhprofDebug = $this->config['xhprofDebug'];
+        }
+        if (isset($this->config['debug']))
+        {
+            $this->debug = $this->config['debug'];
+        }
         $this->root = $this->config['root'];
         $this->server = new swoole_http_server($this->config['host'], $this->config['port']);
 
@@ -107,21 +119,45 @@ class HttpServer extends Server
      */
     public function onWorkerStart($serv , $worker_id)
     {
+        // 初始化一些变量, 下面这些变量在进入真实流程时是无效的
+        $_SERVER['SERVER_ADDR'] = '127.0.0.1';
+        $_SERVER['SERVER_NAME'] = 'localhost';
+        $_SERVER['REQUEST_URI'] = $_SERVER['SCRIPT_FILENAME'] = $_SERVER['DOCUMENT_ROOT'] = $_SERVER['DOCUMENT_URI'] = $_SERVER['SCRIPT_NAME'] = '';
+
         $this->setProcessTitle($this->name . ': worker');
         // 关闭Yii2自己实现的异常错误
         defined('YII_ENABLE_ERROR_HANDLER') || define('YII_ENABLE_ERROR_HANDLER', false);
         // 每个worker都创建一个独立的app实例
+
+        // 加载文件和一些初始化配置
+        if (isset($this->config['bootstrapFile']))
+        {
+            foreach ($this->config['bootstrapFile'] as $file)
+            {
+                require $file;
+            }
+        }
         $config = [];
-        foreach ($this->config['config'] as $file)
+        foreach ($this->config['configFile'] as $file)
         {
             $config = ArrayHelper::merge($config, include $file);
         }
+
         //Container::$persistClasses = Yii::$app->params['persistClasses'];
         //Yii::$container = new Container();
-        Yii::$app = Application::$workerApp = $this->app = new Application($config);
+
+        if ( ! isset($config['components']['assetManager']['basePath']))
+        {
+            $config['components']['assetManager']['basePath'] = $this->root . '/assets';
+        }
+        $config['aliases']['@webroot'] = $this->root;
+        $config['aliases']['@web'] = '/';
+        if (isset($this->config['bootstrapMulti']))
+        {
+            $config['bootstrapMulti'] = $this->config['bootstrapMulti'];
+        }
+        $this->app = Yii::$app = Application::$workerApp = new Application($config);
         Yii::setLogger(new Logger());
-        Yii::setAlias('@webroot', $this->root);
-        Yii::setAlias('@web', '/');
         $this->app->setRootPath($this->root);
         $this->app->setSwooleServer($this->server);
         $this->app->prepare();
@@ -218,6 +254,7 @@ class HttpServer extends Server
             // 只要进入PHP的处理流程, 都默认转发给Yii来做处理
             // 这样意味着, web目录下的PHP文件, 不会直接执行
             $file = $this->root . '/' . $this->indexFile;
+            //echo $file . "\n";
 
             // 备份当前的环境变量
             $backupServerInfo = $_SERVER;
@@ -254,6 +291,8 @@ class HttpServer extends Server
             $_SERVER['DOCUMENT_ROOT'] = $this->root;
             $_SERVER['DOCUMENT_URI'] = $_SERVER['SCRIPT_NAME'] = '/' . $this->indexFile;
 
+            // 使用clone, 原型模式
+            // 所有请求都clone一个原生$app对象
             $app = clone $this->app;
             $app->setSwooleRequest($request);
             $app->setSwooleResponse($response);
@@ -262,7 +301,7 @@ class HttpServer extends Server
             $app->setResponse(clone $this->app->getResponse());
             $app->setView(clone $this->app->getView());
             $app->setSession(clone $this->app->getSession());
-            $app->setUser(clone  $this->app->getUser());
+            $app->setUser(clone $this->app->getUser());
             Yii::$app = $app;
 
             try
@@ -274,24 +313,36 @@ class HttpServer extends Server
                 //$response->end($t);
                 //return;
 
-                // 使用clone, 原型模式
-                // 所有请求都clone一个原生$app对象
                 $app->run();
                 $app->afterRun();
             }
             catch (ErrorException $e)
             {
                 $app->afterRun();
-                //echo (string) $e;
-                //$response->end('');
-                $app->errorHandler->handleException($e);
+                if ($this->debug)
+                {
+                    echo (string) $e;
+                    echo "\n";
+                    $response->end('');
+                }
+                else
+                {
+                    $app->getErrorHandler()->handleException($e);
+                }
             }
             catch (\Exception $e)
             {
                 $app->afterRun();
-                //echo (string) $e;
-                //$response->end('');
-                $app->errorHandler->handleException($e);
+                if ($this->debug)
+                {
+                    echo (string) $e;
+                    echo "\n";
+                    $response->end('');
+                }
+                else
+                {
+                    $app->getErrorHandler()->handleException($e);
+                }
             }
             // 还原环境变量
             Yii::$app = $this->app;
