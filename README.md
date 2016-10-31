@@ -101,6 +101,10 @@ return [
                 __DIR__ . '/../../common/config/main.php',
                 __DIR__ . '/../../frontend/config/main.php'
             ],
+            // 有一些模块比较特殊, 无法实现Refreshable接口, 此时唯有在这里指定他的类名
+            'bootstrapRefresh' => [
+                'xxx\backend\Bootstrap',
+            ],
             // 配置参考 https://www.kancloud.cn/admins/swoole/201155
             'server' => [
                 'worker_num' => 20,

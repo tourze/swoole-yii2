@@ -143,6 +143,11 @@ class HttpServer extends Server
             $config = ArrayHelper::merge($config, include $file);
         }
 
+        if (isset($this->config['bootstrapRefresh']))
+        {
+            $config['bootstrapRefresh'] = $this->config['bootstrapRefresh'];
+        }
+
         // 为Yii分配一个新的DI容器
         Yii::$container = new Container();
 
@@ -152,7 +157,7 @@ class HttpServer extends Server
         }
         $config['aliases']['@webroot'] = $this->root;
         $config['aliases']['@web'] = '/';
-        $this->app = Yii::$app = Application::$workerApp = new Application($config);
+        $this->app = Application::$workerApp = new Application($config);
         Yii::setLogger(new Logger());
         $this->app->setRootPath($this->root);
         $this->app->setSwooleServer($this->server);
@@ -281,6 +286,11 @@ class HttpServer extends Server
                 $_COOKIE = $request->cookie;
             }
 
+            $_SERVER['REQUEST_URI'] = $request->server['request_uri'];
+            if (isset($request->server['query_string']) && $request->server['query_string'])
+            {
+                $_SERVER['REQUEST_URI'] = $_SERVER['REQUEST_URI'] . '?' . $request->server['query_string'];
+            }
             $_SERVER['SERVER_ADDR'] = '127.0.0.1';
             $_SERVER['SERVER_NAME'] = 'localhost';
             $_SERVER['SCRIPT_FILENAME'] = $file;
@@ -289,7 +299,9 @@ class HttpServer extends Server
 
             // 使用clone, 原型模式
             // 所有请求都clone一个原生$app对象
+            $this->app->getRequest()->setUrl(null);
             $app = clone $this->app;
+            Yii::$app =& $app;
             $app->setSwooleRequest($request);
             $app->setSwooleResponse($response);
             $app->setErrorHandler(clone $this->app->getErrorHandler());
@@ -298,7 +310,6 @@ class HttpServer extends Server
             $app->setView(clone $this->app->getView());
             $app->setSession(clone $this->app->getSession());
             $app->setUser(clone $this->app->getUser());
-            Yii::$app = $app;
 
             try
             {
@@ -309,6 +320,7 @@ class HttpServer extends Server
                 //$response->end($t);
                 //return;
 
+                $app->bootstrap();
                 $app->run();
                 $app->afterRun();
             }

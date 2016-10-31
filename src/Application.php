@@ -143,6 +143,11 @@ class Application extends \yii\web\Application
     }
 
     /**
+     * @var array
+     */
+    public $bootstrapRefresh = [];
+
+    /**
      * @var array 扩展缓存
      */
     public static $defaultExtensionCache = null;
@@ -166,6 +171,14 @@ class Application extends \yii\web\Application
      * @var bool
      */
     public static $webAliasInit = false;
+
+    /**
+     * @inheritdoc
+     */
+    public function init()
+    {
+        $this->state = self::STATE_INIT;
+    }
 
     /**
      * 初始化流程
@@ -391,6 +404,7 @@ class Application extends \yii\web\Application
         $this->getRequest()->setBaseUrl('');
         $this->getRequest()->setScriptUrl('/index.php');
         $this->getRequest()->setScriptFile('/index.php');
+        $this->getRequest()->setUrl(null);
         $this->getResponse();
         foreach ($this->getResponse()->formatters as $type => $class)
         {
@@ -422,9 +436,17 @@ class Application extends \yii\web\Application
         $this->getResponse()->setSwooleResponse($this->getSwooleResponse());
         foreach ($this->bootstrap as $k => $component)
         {
-            if (is_object($component) && $component instanceof Refreshable)
+            if (is_object($component))
             {
-                $component->refresh();
+                if (in_array(get_class($component), $this->bootstrapRefresh))
+                {
+                    /** @var BootstrapInterface $component */
+                    $component->bootstrap($this);
+                }
+                elseif ($component instanceof Refreshable)
+                {
+                    $component->refresh();
+                }
             }
         }
     }
