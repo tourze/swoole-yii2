@@ -273,17 +273,20 @@ class HttpServer extends Server
             $_GET = [];
             if (isset($request->get))
             {
-                $_GET = $request->get;
+                $_GET = http_build_query($request->get);
+                parse_str($_GET, $_GET);
             }
             $_POST = [];
             if (isset($request->post))
             {
-                $_POST = $request->post;
+                $_POST = http_build_query($request->post);
+                parse_str($_POST, $_POST);
             }
             $_COOKIE = [];
             if (isset($request->cookie))
             {
-                $_COOKIE = $request->cookie;
+                $_COOKIE = http_build_query($request->cookie);
+                parse_str($_COOKIE, $_COOKIE);
             }
 
             $_SERVER['REQUEST_URI'] = $request->server['request_uri'];
