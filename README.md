@@ -91,6 +91,21 @@ return [
             'host' => '127.0.0.1',
             'port' => '6677',
             'root' => realpath(__DIR__ . '/../../frontend/web'),
+            // 在这里定义一些常用的可以常驻与内存的组件
+            'persistClasses' => [
+                'dmstr\web\AdminLteAsset',
+                'dmstr\widgets\Alert',
+                'kartik\grid\ActionColumn',
+                'kartik\grid\ActionColumnAsset',
+                'kartik\grid\BooleanColumn',
+                'kartik\grid\CheckboxColumn',
+                'kartik\grid\CheckboxColumnAsset',
+                'kartik\grid\DataColumn',
+                'kartik\grid\GridView',
+                'kartik\grid\GridViewAsset',
+                'kartik\grid\GridExportAsset',
+                'kartik\grid\GridResizeColumnsAsset',
+            ],
             // bootstrap文件, 只会引入一次
             'bootstrapFile' => [
                 __DIR__ . '/../../common/config/aliases.php',

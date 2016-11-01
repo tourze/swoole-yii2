@@ -149,6 +149,11 @@ class HttpServer extends Server
         }
 
         // 为Yii分配一个新的DI容器
+        if (isset($this->config['persistClasses']))
+        {
+            Container::$persistClasses = ArrayHelper::merge(Container::$persistClasses, $this->config['persistClasses']);
+            Container::$persistClasses = array_unique(Container::$persistClasses);
+        }
         Yii::$container = new Container();
 
         if ( ! isset($config['components']['assetManager']['basePath']))
@@ -367,6 +372,7 @@ class HttpServer extends Server
         if ($this->xhprofDebug)
         {
             $xhprofData = xhprof_disable();
+            require_once '/vagrant/wwwroot/xhprof/xhprof_lib/utils/xhprof_runs.php';
             $xhprofRuns = new \XHProfRuns_Default();
             $runId = $xhprofRuns->save_run($xhprofData, 'xhprof_test');
             echo "http://127.0.0.1/xhprof/xhprof_html/index.php?run=" . $runId . '&source=xhprof_test'."\n";
