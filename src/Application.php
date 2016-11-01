@@ -5,7 +5,6 @@ namespace tourze\swoole\yii2;
 use swoole_http_request;
 use swoole_http_response;
 use swoole_http_server;
-use tourze\swoole\yii2\web\AssetManager;
 use tourze\swoole\yii2\web\ErrorHandler;
 use tourze\swoole\yii2\web\Request;
 use tourze\swoole\yii2\web\Response;
@@ -171,14 +170,6 @@ class Application extends \yii\web\Application
      * @var bool
      */
     public static $webAliasInit = false;
-
-    /**
-     * @inheritdoc
-     */
-    public function init()
-    {
-        $this->state = self::STATE_INIT;
-    }
 
     /**
      * 初始化流程
@@ -400,7 +391,7 @@ class Application extends \yii\web\Application
     {
         $this->getLog()->setLogger(Yii::getLogger());
         $this->getSecurity();
-        $this->getUrlManager(); // TODO 优化urlManager组件
+        $this->getUrlManager();
         $this->getRequest()->setBaseUrl('');
         $this->getRequest()->setScriptUrl('/index.php');
         $this->getRequest()->setScriptFile('/index.php');

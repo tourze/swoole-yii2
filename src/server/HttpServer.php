@@ -313,6 +313,8 @@ class HttpServer extends Server
             $app->setView(clone $this->app->getView());
             $app->setSession(clone $this->app->getSession());
             $app->setUser(clone $this->app->getUser());
+            // 部分组件是可以复用的, 所以直接引用
+            //$app->setUrlManager($this->app->getUrlManager());
 
             try
             {
@@ -322,8 +324,6 @@ class HttpServer extends Server
                 //$t .= '</pre>';
                 //$response->end($t);
                 //return;
-
-                $app->bootstrap();
                 $app->run();
                 $app->afterRun();
             }
