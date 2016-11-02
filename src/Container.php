@@ -207,7 +207,7 @@ class Container extends \yii\di\Container
             }
             return $object;
         }
-        echo "build: $class - ".json_encode($params)."\n";
+        //echo "build: $class - ".json_encode($params)."\n";
 
         return parent::build($class, $params, $config);
     }
