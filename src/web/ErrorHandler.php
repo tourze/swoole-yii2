@@ -3,6 +3,7 @@
 namespace tourze\swoole\yii2\web;
 
 use swoole_http_response;
+use tourze\swoole\yii2\Application;
 use Yii;
 use yii\base\ExitException;
 use yii\base\UserException;
@@ -40,8 +41,20 @@ class ErrorHandler extends \yii\web\ErrorHandler
      */
     protected function renderException($exception)
     {
+        if ( ! Application::$workerApp)
+        {
+            parent::renderException($exception);
+            return;
+        }
+
+        if ( ! $this->getSwooleResponse())
+        {
+            echo (string) $exception;
+            echo "\n";
+            return;
+        }
         $response = new Response;
-        $response->swooleResponse = $this->swooleResponse;
+        $response->setSwooleResponse($this->getSwooleResponse());
 
         $useErrorView = $response->format === Response::FORMAT_HTML && ( ! YII_DEBUG || $exception instanceof UserException);
 

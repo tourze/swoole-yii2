@@ -6,6 +6,7 @@ use tourze\swoole\yii2\Application;
 use tourze\swoole\yii2\web\formatter\JsonResponseFormatter;
 use swoole_http_response;
 use Yii;
+use yii\base\Exception;
 use yii\base\InvalidConfigException;
 use yii\helpers\ArrayHelper;
 
@@ -82,6 +83,12 @@ class Response extends \yii\web\Response
 
         $this->_sentHeaders = [];
         $headers = $this->getHeaders();
+        $response = $this->getSwooleResponse();
+        if ( ! $response)
+        {
+            //xdebug_print_function_stack();
+            throw new Exception("The swoole response is empty.");
+        }
         if ($headers)
         {
             foreach ($headers as $name => $values)
@@ -91,7 +98,7 @@ class Response extends \yii\web\Response
                 {
                     $value = array_shift($values);
                     $this->_sentHeaders[$name] = $value;
-                    $this->getSwooleResponse()->header($name, $value);
+                    $response->header($name, $value);
                 }
                 else
                 {
@@ -100,7 +107,7 @@ class Response extends \yii\web\Response
                     foreach ($values as $value)
                     {
                         //echo "$name: $value\n";
-                        $this->getSwooleResponse()->header($name, $value);
+                        $response->header($name, $value);
                     }
                 }
             }

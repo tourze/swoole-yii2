@@ -147,7 +147,6 @@ class Container extends \yii\di\Container
         'yii\web\JsonResponseFormatter',
         'yii\web\Link',
         'yii\web\MultipartFormDataParser',
-        'yii\web\Response',
         'yii\web\UrlNormalizer',
         'yii\web\UrlRule',
         'yii\web\UserEvent',
