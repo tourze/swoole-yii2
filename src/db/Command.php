@@ -2,6 +2,6 @@
 
 namespace tourze\swoole\yii2\db;
 
-class Command extends \xj\dbreconnect\base\Command
+class Command extends \yii\db\Command
 {
 }

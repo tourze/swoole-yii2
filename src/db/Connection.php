@@ -2,7 +2,7 @@
 
 namespace tourze\swoole\yii2\db;
 
-class Connection extends \xj\dbreconnect\base\Connection
+class Connection extends \yii\db\Connection
 {
 
     /**
