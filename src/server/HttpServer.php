@@ -15,6 +15,11 @@ use yii\base\ErrorException;
 use yii\helpers\ArrayHelper;
 use yii\helpers\FileHelper;
 
+/**
+ * HTTP服务器
+ *
+ * @package tourze\swoole\yii2\server
+ */
 class HttpServer extends Server
 {
 
@@ -58,7 +63,7 @@ class HttpServer extends Server
      */
     public function run($app)
     {
-        $this->config = (array) Yii::$app->params['swooleHttp'][$app];
+        $this->config = is_array($app) ? $app : (array) Yii::$app->params['swooleHttp'][$app];
         if (isset($this->config['xhprofDebug']))
         {
             $this->xhprofDebug = $this->config['xhprofDebug'];
@@ -372,7 +377,6 @@ class HttpServer extends Server
         if ($this->xhprofDebug)
         {
             $xhprofData = xhprof_disable();
-            require_once '/vagrant/wwwroot/xhprof/xhprof_lib/utils/xhprof_runs.php';
             $xhprofRuns = new \XHProfRuns_Default();
             $runId = $xhprofRuns->save_run($xhprofData, 'xhprof_test');
             echo "http://127.0.0.1/xhprof/xhprof_html/index.php?run=" . $runId . '&source=xhprof_test'."\n";
