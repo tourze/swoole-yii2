@@ -2,6 +2,7 @@
 
 namespace demo\controllers;
 
+use Yii;
 use yii\web\Controller;
 
 class SiteController extends Controller
@@ -14,6 +15,6 @@ class SiteController extends Controller
 
     public function actionError()
     {
-        return 'error';
+        return (string) Yii::$app->errorHandler->exception;
     }
 }
