@@ -6,6 +6,11 @@ use ReflectionClass;
 use Yii;
 use yii\base\Object;
 
+/**
+ * 继承原有的容器, 实现一些额外的逻辑
+ *
+ * @package tourze\swoole\yii2
+ */
 class Container extends \yii\di\Container
 {
 
@@ -13,6 +18,7 @@ class Container extends \yii\di\Container
      * @var array 类的别名
      */
     public static $classAlias = [
+        'yii\db\Command' => 'tourze\swoole\yii2\db\Command',
         'yii\db\Connection' => 'tourze\swoole\yii2\db\Connection',
         'yii\debug\Module' => 'tourze\swoole\yii2\debug\Module',
         'yii\debug\panels\ConfigPanel' => 'tourze\swoole\yii2\debug\ConfigPanel',
