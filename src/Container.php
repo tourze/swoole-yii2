@@ -19,6 +19,7 @@ class Container extends \yii\di\Container
         'yii\debug\panels\RequestPanel' => 'tourze\swoole\yii2\debug\RequestPanel',
         'yii\log\Dispatcher' => 'tourze\swoole\yii2\log\Dispatcher',
         'yii\log\FileTarget' => 'tourze\swoole\yii2\log\FileTarget',
+        'yii\log\Logger' => 'tourze\swoole\yii2\log\Logger',
         'yii\swiftmailer\Mailer' => 'tourze\swoole\yii2\mailer\SwiftMailer',
         'yii\web\Request' => 'tourze\swoole\yii2\web\Request',
         'yii\web\Response' => 'tourze\swoole\yii2\web\Response',
@@ -75,6 +76,7 @@ class Container extends \yii\di\Container
         'yii\debug\panels\LogPanel',
         'yii\debug\panels\MailPanel',
         'yii\debug\panels\ProfilingPanel',
+        'yii\db\ActiveQuery',
         'yii\db\ColumnSchema',
         'yii\db\mysql\Schema',
         'yii\filters\AccessControl',
@@ -147,6 +149,7 @@ class Container extends \yii\di\Container
         'yii\web\JsonResponseFormatter',
         'yii\web\Link',
         'yii\web\MultipartFormDataParser',
+        'yii\web\UrlManager',
         'yii\web\UrlNormalizer',
         'yii\web\UrlRule',
         'yii\web\UserEvent',
@@ -181,15 +184,22 @@ class Container extends \yii\di\Container
         }
 
         // 构造方法参数为空才走这个流程
-        if ($class && empty($params) && in_array($class, self::$persistClasses))
+        if ($class && in_array($class, self::$persistClasses))
         {
+            /* @var $reflection ReflectionClass */
+            list ($reflection, $dependencies) = $this->getDependencies($class);
             if ( ! isset(self::$persistInstances[$class]))
             {
-                /* @var $reflection ReflectionClass */
-                list ($reflection, $dependencies) = $this->getDependencies($class);
                 self::$persistInstances[$class] = $reflection->newInstanceWithoutConstructor();
             }
             $object = clone self::$persistInstances[$class];
+            // 如果有params参数的话, 则交给构造方法去执行
+            // 这里的逻辑貌似太简单了..
+            if ($params)
+            {
+                $reflection->getConstructor()->invokeArgs($object, $params);
+            }
+            // 执行一些配置信息
             Yii::configure($object, $config);
             if ($object instanceof Object)
             {
@@ -197,7 +207,7 @@ class Container extends \yii\di\Container
             }
             return $object;
         }
-        //echo "build: $class - ".json_encode($params)."\n";
+        echo "build: $class - ".json_encode($params)."\n";
 
         return parent::build($class, $params, $config);
     }

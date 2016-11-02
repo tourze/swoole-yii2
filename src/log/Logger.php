@@ -10,6 +10,17 @@ class Logger extends \yii\log\Logger
     /**
      * @inheritdoc
      */
+    public function init()
+    {
+        if ( ! Application::$workerApp)
+        {
+            parent::init();
+        }
+    }
+
+    /**
+     * @inheritdoc
+     */
     public function flush($final = false)
     {
         if ( ! Application::$workerApp)
