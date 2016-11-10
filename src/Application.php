@@ -427,17 +427,18 @@ class Application extends \yii\web\Application
         $this->getResponse()->setSwooleResponse($this->getSwooleResponse());
         foreach ($this->bootstrap as $k => $component)
         {
-            if (is_object($component))
+            if ( ! is_object($component))
             {
-                if (in_array(get_class($component), $this->bootstrapRefresh))
-                {
-                    /** @var BootstrapInterface $component */
-                    $component->bootstrap($this);
-                }
-                elseif ($component instanceof Refreshable)
-                {
-                    $component->refresh();
-                }
+                $component = $this->get($component);
+            }
+            if (in_array(get_class($component), $this->bootstrapRefresh))
+            {
+                /** @var BootstrapInterface $component */
+                $component->bootstrap($this);
+            }
+            elseif ($component instanceof Refreshable)
+            {
+                $component->refresh();
             }
         }
     }
