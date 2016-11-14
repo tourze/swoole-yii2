@@ -170,7 +170,7 @@ class HttpServer extends Server
         $this->app = Application::$workerApp = new Application($config);
         Yii::setLogger(new Logger());
         $this->app->setRootPath($this->root);
-        $this->app->setSwooleServer($this->server);
+        $this->app->setServer($this->server);
         $this->app->prepare();
     }
 

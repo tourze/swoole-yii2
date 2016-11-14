@@ -21,7 +21,7 @@ use yii\base\Widget;
 /**
  * @property swoole_http_request  serverRequest
  * @property swoole_http_response serverResponse
- * @property swoole_http_server   swooleServer
+ * @property swoole_http_server   server
  * @property string rootPath
  */
 class Application extends \yii\web\Application
@@ -60,22 +60,22 @@ class Application extends \yii\web\Application
     /**
      * @var swoole_http_server 当前运行中的swoole实例
      */
-    protected $_swooleServer;
+    protected $_server;
 
     /**
      * @return swoole_http_server
      */
-    public function getSwooleServer()
+    public function getServer()
     {
-        return $this->_swooleServer;
+        return $this->_server;
     }
 
     /**
-     * @param swoole_http_server $swooleServer
+     * @param swoole_http_server $server
      */
-    public function setSwooleServer($swooleServer)
+    public function setServer($server)
     {
-        $this->_swooleServer = $swooleServer;
+        $this->_server = $server;
     }
 
     /**

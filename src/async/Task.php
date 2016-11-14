@@ -57,7 +57,7 @@ class Task
             /** @var Application $app */
             $app = Yii::$app;
             /** @var swoole_http_server $server */
-            $server = $app->getSwooleServer();
+            $server = $app->getServer();
             $taskId = $server->task($data);
             //echo "$taskId Add task: $function\n";
             return $taskId;
