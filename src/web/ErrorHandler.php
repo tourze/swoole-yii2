@@ -10,7 +10,7 @@ use yii\base\UserException;
 use yii\web\HttpException;
 
 /**
- * @property swoole_http_response swooleResponse
+ * @property swoole_http_response serverResponse
  */
 class ErrorHandler extends \yii\web\ErrorHandler
 {
@@ -18,22 +18,22 @@ class ErrorHandler extends \yii\web\ErrorHandler
     /**
      * @var swoole_http_response
      */
-    protected $_swooleResponse;
+    protected $_serverResponse;
 
     /**
      * @return swoole_http_response
      */
-    public function getSwooleResponse()
+    public function getServerResponse()
     {
-        return $this->_swooleResponse;
+        return $this->_serverResponse;
     }
 
     /**
-     * @param swoole_http_response $swooleResponse
+     * @param swoole_http_response $serverResponse
      */
-    public function setSwooleResponse($swooleResponse)
+    public function setServerResponse($serverResponse)
     {
-        $this->_swooleResponse = $swooleResponse;
+        $this->_serverResponse = $serverResponse;
     }
 
     /**
@@ -47,14 +47,14 @@ class ErrorHandler extends \yii\web\ErrorHandler
             return;
         }
 
-        if ( ! $this->getSwooleResponse())
+        if ( ! $this->getServerResponse())
         {
             echo (string) $exception;
             echo "\n";
             return;
         }
         $response = new Response;
-        $response->setSwooleResponse($this->getSwooleResponse());
+        $response->setServerResponse($this->getServerResponse());
 
         $useErrorView = $response->format === Response::FORMAT_HTML && ( ! YII_DEBUG || $exception instanceof UserException);
 
@@ -117,19 +117,19 @@ class ErrorHandler extends \yii\web\ErrorHandler
      */
     public function handleException($exception)
     {
-        if ( ! $this->swooleResponse)
+        if ( ! $this->getServerResponse())
         {
             parent::handleException($exception);
             return;
         }
         if ($exception instanceof ExitException)
         {
-            $this->swooleResponse->end('');
+            $this->getServerResponse()->end('');
             return;
         }
 
         $this->exception = $exception;
-        $this->swooleResponse->status(500);
+        $this->getServerResponse()->status(500);
 
         try
         {
@@ -155,8 +155,8 @@ class ErrorHandler extends \yii\web\ErrorHandler
             {
                 $html = 'An internal server error occurred.';
             }
-            $this->swooleResponse->header('Content-Type', 'text/html; charset=utf-8');
-            $this->swooleResponse->end($html);
+            $this->getServerResponse()->header('Content-Type', 'text/html; charset=utf-8');
+            $this->getServerResponse()->end($html);
         }
 
         $this->exception = null;

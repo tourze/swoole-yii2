@@ -13,7 +13,7 @@ use yii\helpers\ArrayHelper;
 /**
  * 内部实现response
  *
- * @property swoole_http_response swooleResponse
+ * @property swoole_http_response serverResponse
  */
 class Response extends \yii\web\Response
 {
@@ -42,22 +42,22 @@ class Response extends \yii\web\Response
     /**
      * @var swoole_http_response
      */
-    protected $_swooleResponse;
+    protected $_serverResponse;
 
     /**
      * @return swoole_http_response
      */
-    public function getSwooleResponse()
+    public function getServerResponse()
     {
-        return $this->_swooleResponse;
+        return $this->_serverResponse;
     }
 
     /**
-     * @param swoole_http_response $swooleResponse
+     * @param swoole_http_response $serverResponse
      */
-    public function setSwooleResponse($swooleResponse)
+    public function setServerResponse($serverResponse)
     {
-        $this->_swooleResponse = $swooleResponse;
+        $this->_serverResponse = $serverResponse;
     }
 
     /**
@@ -83,7 +83,7 @@ class Response extends \yii\web\Response
 
         $this->_sentHeaders = [];
         $headers = $this->getHeaders();
-        $response = $this->getSwooleResponse();
+        $response = $this->getServerResponse();
         if ( ! $response)
         {
             //xdebug_print_function_stack();
@@ -112,7 +112,7 @@ class Response extends \yii\web\Response
                 }
             }
         }
-        $this->getSwooleResponse()->status($this->getStatusCode());
+        $this->getServerResponse()->status($this->getStatusCode());
         $this->sendCookies();
     }
 
@@ -147,7 +147,7 @@ class Response extends \yii\web\Response
             {
                 $value = Yii::$app->getSecurity()->hashData(serialize([$cookie->name, $value]), $validationKey);
             }
-            $this->getSwooleResponse()->cookie($cookie->name, $value, $cookie->expire, $cookie->path, $cookie->domain, $cookie->secure, $cookie->httpOnly);
+            $this->getServerResponse()->cookie($cookie->name, $value, $cookie->expire, $cookie->path, $cookie->domain, $cookie->secure, $cookie->httpOnly);
         }
     }
 
@@ -163,11 +163,11 @@ class Response extends \yii\web\Response
         }
         if ($this->content === null)
         {
-            $this->getSwooleResponse()->end();
+            $this->getServerResponse()->end();
         }
         else
         {
-            $this->getSwooleResponse()->end($this->content);
+            $this->getServerResponse()->end($this->content);
         }
     }
 }

@@ -5,7 +5,7 @@ namespace tourze\swoole\yii2\web;
 use swoole_http_request;
 
 /**
- * @property swoole_http_request swooleRequest
+ * @property swoole_http_request serverRequest
  */
 class Request extends \yii\web\Request
 {
@@ -13,21 +13,21 @@ class Request extends \yii\web\Request
     /**
      * @var swoole_http_request
      */
-    protected $_swooleRequest;
+    protected $_serverRequest;
 
     /**
      * @return mixed
      */
-    public function getSwooleRequest()
+    public function getServerRequest()
     {
-        return $this->_swooleRequest;
+        return $this->_serverRequest;
     }
 
     /**
-     * @param mixed $swooleRequest
+     * @param mixed $serverRequest
      */
-    public function setSwooleRequest($swooleRequest)
+    public function setServerRequest($serverRequest)
     {
-        $this->_swooleRequest = $swooleRequest;
+        $this->_serverRequest = $serverRequest;
     }
 }

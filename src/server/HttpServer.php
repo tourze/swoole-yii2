@@ -315,8 +315,8 @@ class HttpServer extends Server
             $this->app->getRequest()->setUrl(null);
             $app = clone $this->app;
             Yii::$app =& $app;
-            $app->setSwooleRequest($request);
-            $app->setSwooleResponse($response);
+            $app->setServerRequest($request);
+            $app->setServerResponse($response);
             $app->setErrorHandler(clone $this->app->getErrorHandler());
             $app->setRequest(clone $this->app->getRequest());
             $app->setResponse(clone $this->app->getResponse());

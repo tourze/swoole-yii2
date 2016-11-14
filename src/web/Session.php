@@ -11,7 +11,7 @@ use yii\web\Cookie;
  * Class Session
  *
  * @property string sessionKey
- * @property swoole_http_response swooleResponse
+ * @property swoole_http_response serverResponse
  */
 class Session extends \yii\redis\Session
 {
@@ -19,22 +19,22 @@ class Session extends \yii\redis\Session
     /**
      * @var swoole_http_response
      */
-    protected $_swooleResponse;
+    protected $_serverResponse;
 
     /**
      * @return swoole_http_response
      */
-    public function getSwooleResponse()
+    public function getServerResponse()
     {
-        return $this->_swooleResponse;
+        return $this->_serverResponse;
     }
 
     /**
-     * @param swoole_http_response $swooleResponse
+     * @param swoole_http_response $serverResponse
      */
-    public function setSwooleResponse($swooleResponse)
+    public function setServerResponse($serverResponse)
     {
-        $this->_swooleResponse = $swooleResponse;
+        $this->_serverResponse = $serverResponse;
     }
 
     /**

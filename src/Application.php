@@ -19,8 +19,8 @@ use yii\base\InvalidConfigException;
 use yii\base\Widget;
 
 /**
- * @property swoole_http_request  swooleRequest
- * @property swoole_http_response swooleResponse
+ * @property swoole_http_request  serverRequest
+ * @property swoole_http_response serverResponse
  * @property swoole_http_server   swooleServer
  * @property string rootPath
  */
@@ -81,43 +81,43 @@ class Application extends \yii\web\Application
     /**
      * @var swoole_http_request 当前正在处理的swoole请求实例
      */
-    protected $_swooleRequest;
+    protected $_serverRequest;
 
     /**
      * @return swoole_http_request
      */
-    public function getSwooleRequest()
+    public function getServerRequest()
     {
-        return $this->_swooleRequest;
+        return $this->_serverRequest;
     }
 
     /**
-     * @param swoole_http_request $swooleRequest
+     * @param swoole_http_request $serverRequest
      */
-    public function setSwooleRequest($swooleRequest)
+    public function setServerRequest($serverRequest)
     {
-        $this->_swooleRequest = $swooleRequest;
+        $this->_serverRequest = $serverRequest;
     }
 
     /**
      * @var swoole_http_response 当前正在处理的swoole响应实例
      */
-    protected $_swooleResponse;
+    protected $_serverResponse;
 
     /**
      * @return swoole_http_response
      */
-    public function getSwooleResponse()
+    public function getServerResponse()
     {
-        return $this->_swooleResponse;
+        return $this->_serverResponse;
     }
 
     /**
-     * @param swoole_http_response $swooleResponse
+     * @param swoole_http_response $serverResponse
      */
-    public function setSwooleResponse($swooleResponse)
+    public function setServerResponse($serverResponse)
     {
-        $this->_swooleResponse = $swooleResponse;
+        $this->_serverResponse = $serverResponse;
     }
 
     /**
@@ -418,13 +418,13 @@ class Application extends \yii\web\Application
         // widget计数器等要清空
         Widget::$counter = 0;
         Widget::$stack = [];
-        $this->getErrorHandler()->setSwooleResponse($this->getSwooleResponse());
-        $this->getRequest()->setQueryParams(isset($this->getSwooleRequest()->get) ? $this->getSwooleRequest()->get : []);
+        $this->getErrorHandler()->setServerResponse($this->getServerResponse());
+        $this->getRequest()->setQueryParams(isset($this->getServerRequest()->get) ? $this->getServerRequest()->get : []);
         // 上面处理了$_GET部分, 但是没处理$_POST部分.
-        $this->getRequest()->setHostInfo('http://' . $this->getSwooleRequest()->header['host']);
-        $this->getRequest()->setPathInfo($this->getSwooleRequest()->server['path_info']);
-        $this->getRequest()->setSwooleRequest($this->getSwooleRequest());
-        $this->getResponse()->setSwooleResponse($this->getSwooleResponse());
+        $this->getRequest()->setHostInfo('http://' . $this->getServerRequest()->header['host']);
+        $this->getRequest()->setPathInfo($this->getServerRequest()->server['path_info']);
+        $this->getRequest()->setServerRequest($this->getServerRequest());
+        $this->getResponse()->setServerResponse($this->getServerResponse());
         foreach ($this->bootstrap as $k => $component)
         {
             if ( ! is_object($component))
