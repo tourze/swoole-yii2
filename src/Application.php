@@ -429,7 +429,14 @@ class Application extends \yii\web\Application
         {
             if ( ! is_object($component))
             {
-                $component = $this->get($component);
+                if ($this->has($component))
+                {
+                    $component = $this->get($component);
+                }
+                elseif ($this->hasModule($component))
+                {
+                    $component = $this->getModule($component);
+                }
             }
             if (in_array(get_class($component), $this->bootstrapRefresh))
             {
