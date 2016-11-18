@@ -126,8 +126,8 @@ return [
             'server' => [
                 'worker_num' => 20,
                 'max_request' => 10000,
-                // 任务进程数
-                'task_worker_num' => 50,
+                'task_worker_num' => 50,  // 任务进程数
+                'buffer_output_size' => 16 * 1024 * 1024, // 该参数可选, 如果你的业务需要输出大文件(如巨型html或导出大文件), 具体参考 http://wiki.swoole.com/wiki/page/440.html
             ],
         ],
     ],
